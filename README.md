@@ -14,6 +14,7 @@ It allows up to n wifi points to be configured (n is a constant in main.c)
 After provisioning, you can connect to the device directly to set an endpoint and a key to upload images to.
 Images will be uploaded with a POST: {server}/upstream/upload?key={key} with the image as body.
 Interval species the delay between pictures (This does not include the time it takes to upload it)
+I will probably provide the repository for the server at some point, atm some of the dependencies are not yet ready for publishing.
 
 ![Provisioning Example](interface.jpg)
 
