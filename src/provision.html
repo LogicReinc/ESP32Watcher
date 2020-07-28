@@ -1,0 +1,171 @@
+<html>
+    <head>
+
+        <style>
+            html{
+                background-color: #333333;
+                color: white;
+                font-family: sans-serif;
+                text-align: center;
+                padding-top: 30px;
+            }
+            .field{
+                margin-bottom: 0px;
+                background-color: black;
+                border-color: #444444;
+                font-size: 20px;
+                color: white;
+                text-align: center;
+            }
+            p{
+                font-size: 15px;
+            }
+            .submit{
+                margin-top: 20px;
+                font-size: 20px;
+                padding: 10px;
+                padding-left: 20px;
+                padding-right :20px;
+                color: white;
+                background-color: #55028d;
+                border: 2px solid #2d013a;
+            }
+            select{
+                background-color: black;
+                border-color: #444444;
+                font-size: 20px;
+                color: white;
+                padding: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="provisioning">
+            <h1>Provisioning</h1>
+            <p>
+                Configure your Wifi for this Espressif chip.
+            </p>
+            <div style="color: red;" id="error">
+
+            </div>
+            <div>
+                <h4 style="margin-bottom: 10px;">SSID</h4>
+                <input id="ssid" class="field" type="text" />
+            </div>
+            <div>
+                <h4 style="margin-bottom: 10px;">Password</h4>
+                <input id="password" class="field" type="password" />
+            </div>
+            <!--
+            <div style="margin-top:20px;">
+                <input id="staticCheck" type="checkbox" onchange="checkChanged" />
+                Static
+            </div>-->
+            <h4 style="margin-bottom:10px;">Slot</h4>
+            <select id="select">
+
+            </select>
+            <br />
+            <button class="submit" onclick="submit()">
+                Configure
+            </button>
+        </div>
+        <div id="success">
+
+        </div>
+        <script>
+            var isDebug = false;
+            //var elStaticCheck = document.getElementById("staticCheck");
+            var elSsid = document.getElementById("ssid");
+            var elPass = document.getElementById("password");
+            var elStatic = document.getElementById("static");
+            var elError = document.getElementById("error");
+            var elProvisioning = document.getElementById("provisioning");
+            var elSuccess = document.getElementById("success");
+            var elSelect = document.getElementById("select");
+            function getStatic(){
+                return elStatic.value;
+            }
+            function getUsername(){
+                return elSsid.value;
+            }
+            function getPassword(){
+                return elPass.value;
+            }
+            function setStaticVisible(vis){
+                if(!vis)
+                    elStatic.style.display = "none";
+                else
+                    elStatic.style.display = "block";
+            }
+            function setError(err){
+                if(err == "")
+                    elError.style.display = "none";
+                else
+                {
+                    elError.innerText = err;
+                    elError.style.display = "block";
+                }
+            }
+            function setTab(name){
+                switch(name){
+                    case "provisioning":
+                        elSuccess.style.display = "none";
+                        elProvisioning.style.display = "block";
+                        break;
+                    case "success":
+                        elSuccess.style.display = "block";
+                        elProvisioning.style.display = "none";
+                        break;
+                    
+                }
+            }
+
+            function checkChanged(){
+                setStaticVisible(getStatic());
+            }
+
+            function provision(ssid, pass, slot){
+                fetch("/provision?ssid=" + ssid + "&pass=" + pass + "&slot=" + slot,{
+
+                })
+                .then(json)
+                .then(function(data){
+                    if(data.Success)
+                        setTab("success");
+                    else
+                        setError("Failed:" + data.Error);
+                })
+                .catch(function(error){
+                    setError(error);
+                });
+            }
+            function submit(){
+                provision(getUsername(), getPassword(), elSelect.value);
+            }
+
+            function handleSSIDs(ssids){
+                var options = "";
+                for(var i = 0; i < ssids.length; i++){
+                    if(ssids[i] == null || ssids[i] == "")
+                        ssids[i] = "None";
+                    options += "<option value='" + i + "'> Slot " + i + ": " + ssids[i] + "</option>"
+                }
+                elSelect.innerHTML = options;
+            }
+
+            function updateSSIDs(){
+                if(isDebug){
+                    handleSSIDs(["SomeWifi", "", "", "Test", "Whatever"]);
+                }
+                else{
+                    fetch("/ssids")
+                    .then(response=>response.json())
+                    .then(data=>handleSSIDs(data));
+                }
+            }
+
+            updateSSIDs();
+        </script>
+    </body>
+</html>

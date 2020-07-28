@@ -1,0 +1,158 @@
+<html>
+    <head>
+        <style>
+            html{
+                background-color: #333333;
+                color: white;
+                font-family: sans-serif;
+                text-align: center;
+                padding-top: 30px;
+            }
+            .field{
+                margin-bottom: 0px;
+                background-color: black;
+                border-color: #444444;
+                font-size: 20px;
+                color: white;
+                text-align: center;
+                width: 50%;
+                min-width: 300px;
+            }
+            p{
+                font-size: 15px;
+            }
+            .submit{
+                margin-top: 20px;
+                font-size: 20px;
+                padding: 10px;
+                padding-left: 20px;
+                padding-right :20px;
+                color: white;
+                background-color: #55028d;
+                border: 2px solid #2d013a;
+            }
+            select{
+                background-color: black;
+                border-color: #444444;
+                font-size: 20px;
+                color: white;
+                padding: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            <h3>Watcher Server Settings</h3>
+            <div>
+                <h4>Server</h4>
+                <input class="field" type="text" id="server" />
+                <h4>Key</h4>
+                <input class="field" maxlength="36" type="text" id="key" oninput="sanitizeKey()" />
+            </div>
+            <div>
+                <button class="submit" onclick="sendWatcherServer()">Set Server</button>
+                <div id="resultServer" style="color: green">
+
+                </div>
+            </div>
+        </div>
+        <div>
+            <h3>Watcher Settings</h3>
+            <div>
+                <h4>Interval</h4>
+                <input class="field" type="number" id="interval" />
+            </div>
+            <div>
+                <button class="submit" onclick="sendWatcher()">Set Settings</button>
+                <div id="resultWatcher" style="color: green">
+
+                </div>
+            </div>
+        </div>
+        <script>
+            var elServer = document.getElementById("server");
+            var elKey = document.getElementById("key");
+            var elInterval = document.getElementById("interval");
+            var elResultServer = document.getElementById("resultServer");
+            var elResultWatcher = document.getElementById("resultWatcher");
+
+            function sanitizeKey(){
+                var val = elKey.value;
+                var toRemove = [];
+                for(var i = 0;i < val.length; i++){
+                    var c = val.charAt(i);
+                    if(!c.match(/[a-zA-Z0-9-]/))
+                    {
+                        if(toRemove.indexOf(c) == -1)
+                            toRemove.push(c);
+                    }
+                }
+                for(var i = 0; i < toRemove.length; i++)
+                    while(val.indexOf(toRemove[i]) >= 0)
+                        val = val.replace(toRemove[i], "");
+                elKey.value = val;
+            }
+            function fillWatcherServerSettings(wss){
+                if(wss){
+                    elServer.value = wss.server;
+                    elKey.value = wss.key;
+                }
+            }
+            function fillWatcherSettings(ws){
+                elInterval.value = ws.interval;
+            }
+            function constructWatcherServerSettings(){
+                return {
+                    server: elServer.value,
+                    key: elKey.value
+                };
+            }
+            function constructWatcherSettings(){
+                return {
+                    interval: parseInt(elInterval.value)
+                };
+            }
+            function getSettings(cb){
+                fetch("/settings")
+                    .then(resp=>resp.json())
+                    .then(data=>cb(data));
+            }
+            function sendWatcherServer(){
+                var wss = constructWatcherServerSettings();
+                fetch("/settings",{
+                    method: "POST",
+                    body: JSON.stringify({
+                        server: wss
+                    })
+                })
+                .then(resp=>resp.text())
+                .then(data=>{
+                    elResultServer.innerHTML = data;
+                });
+            }
+            function sendWatcher(){
+                var ws = constructWatcherSettings();
+                fetch("/settings",{
+                    method: "POST",
+                    body: JSON.stringify({
+                        watcher: ws
+                    })
+                })
+                .then(resp=>resp.text())
+                .then(data=>{
+                    elResultServer.innerHTML = data;
+                });
+            }
+
+            getSettings((result)=>{
+                if(result){
+                    if(result.server)
+                        fillWatcherServerSettings(result.server);
+                    if(result.watcher)
+                        fillWatcherSettings(result.watcher);
+                }
+            });
+
+        </script>
+    </body>
+</html>
